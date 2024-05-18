@@ -31,8 +31,59 @@
 
 // To what floor do the instructions take Santa?
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+// Your puzzle answer was 280.
 
-int main(int argc, char *argv[]) {}
+// The first half of this puzzle is complete! It provides one gold star: *
+
+// --- Part Two ---
+
+// Now, given the same instructions, find the position of the first character
+// that causes him to enter the basement (floor -1). The first character in the
+// instructions has position 1, the second character has position 2, and so on.
+
+// For example:
+
+//     ) causes him to enter the basement at character position 1.
+//     ()()) causes him to enter the basement at character position 5.
+
+// What is the position of the character that causes Santa to first enter the
+// basement?
+
+// 1797
+
+#include <stdio.h>
+
+#define MAX_LINE_LENGTH 10000
+
+int main(int argc, char *argv[]) {
+  FILE *file;
+  char line[MAX_LINE_LENGTH];
+  int floor = 0;
+
+  if (argc < 2) {
+    printf("Usage: %s <file>\n", argv[0]);
+    return 1;
+  }
+
+  file = fopen(argv[1], "r");
+  if (file == NULL) {
+    printf("Error: cannot open file %s\n", argv[1]);
+    return 1;
+  }
+
+  while (fgets(line, MAX_LINE_LENGTH, file) != NULL) {
+    for (size_t i = 0; line[i] != '\0'; i++) {
+      if (line[i] == '(')
+        floor++;
+      else if (line[i] == ')')
+        floor--;
+      if (floor == -1)
+        printf("Position of basement entry: %zu\n", i + 1);
+    }
+  }
+
+  printf("Final floor: %d\n", floor);
+
+  fclose(file);
+  return 0;
+}

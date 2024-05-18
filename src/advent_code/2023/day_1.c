@@ -63,6 +63,8 @@
 // In this example, the calibration values are 29, 83, 13, 24, 42, 14, and 76.
 // Adding these together produces 281.
 
+// 53868
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,10 +73,8 @@
 
 int main(int argc, char *argv[]) {
   FILE *file;
-  char *line = NULL;
-  size_t len = 0;
-  ssize_t read;
-  char *wordDigit = NULL;
+  char line[MAX_LINE_LENGTH];
+  char wordDigit[MAX_LINE_LENGTH];
   int sum = 0;
 
   if (argc < 2) {
@@ -88,41 +88,29 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  while ((read = getline(&line, &len, file)) != -1) {
-    int first_digit = -1;
-    int last_digit = -1;
+  while (fgets(line, MAX_LINE_LENGTH, file) != NULL) {
+    int firstDigit = -1;
+    int lastDigit = -1;
     int i = 0;
-    int two_digit_number = 0;
+    int twoDigitNumber = 0;
 
-    while (i < read) {
+    while (line[i] != '\0') {
       if (line[i] >= '0' && line[i] <= '9') {
-        if (wordDigit != NULL) {
-          free(wordDigit);
-          wordDigit = NULL;
+        if (firstDigit == -1) {
+          firstDigit = line[i] - '0';
         }
-
-        if (first_digit == -1) {
-          first_digit = line[i] - '0';
-        }
-        last_digit = line[i] - '0';
+        lastDigit = line[i] - '0';
       } else if (line[i] == '\n') {
-        if (wordDigit != NULL) {
-          free(wordDigit);
-          wordDigit = NULL;
-        }
         break;
       } else {
-        if (wordDigit == NULL) {
-          wordDigit = malloc(sizeof(char) * MAX_LINE_LENGTH);
-        }
         strncat(wordDigit, &line[i], 1);
 
-        if (wordDigit != NULL && strlen(wordDigit) >= 3) {
+        if (strlen(wordDigit) >= 3) {
           char *numbers[] = {"one", "two",   "three", "four", "five",
                              "six", "seven", "eight", "nine"};
           int digit = -1;
 
-          for (int j = 0; j < 9; j++) {
+          for (size_t j = 0; j < sizeof(numbers) / sizeof(numbers[0]); j++) {
             int pos = strlen(wordDigit) - strlen(numbers[j]);
             if (pos >= 0 && strcmp(&wordDigit[pos], numbers[j]) == 0) {
               digit = j + 1;
@@ -131,29 +119,26 @@ int main(int argc, char *argv[]) {
           }
 
           if (digit != -1) {
-            if (first_digit == -1) {
-              first_digit = digit;
+            if (firstDigit == -1) {
+              firstDigit = digit;
             }
-            last_digit = digit;
+            lastDigit = digit;
           }
         }
       }
       i++;
     }
 
-    if (first_digit != -1 && last_digit != -1) {
-      two_digit_number = first_digit * 10 + last_digit;
-      sum += two_digit_number;
-      printf("%d, ", two_digit_number);
+    if (firstDigit != -1 && lastDigit != -1) {
+      twoDigitNumber = firstDigit * 10 + lastDigit;
+      sum += twoDigitNumber;
     }
+
+    wordDigit[0] = '\0';
   }
 
-  printf("\nSum of all two-digit numbers is %d\n", sum);
+  printf("Sum of all two-digit numbers is %d\n", sum);
 
   fclose(file);
-  if (line) {
-    free(line);
-  }
-
   return 0;
 }
