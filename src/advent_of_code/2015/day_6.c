@@ -122,25 +122,25 @@ int main(int argc, char *argv[]) {
 
   fclose(file);
 
-  // int lit_lights = 0;
+  // int litLights = 0;
   // for (int i = 0; i < GRID_SIZE; i++) {
   //   for (int j = 0; j < GRID_SIZE; j++) {
   //     if (lights[i][j]) {
-  //       lit_lights++;
+  //       litLights++;
   //     }
   //   }
   // }
 
-  // printf("Lit lights: %d\n", lit_lights);
+  // printf("Lit lights: %d\n", litLights);
 
-  int total_brightness = 0;
+  int totalBrightness = 0;
   for (int i = 0; i < GRID_SIZE; i++) {
     for (int j = 0; j < GRID_SIZE; j++) {
-      total_brightness += lights[i][j];
+      totalBrightness += lights[i][j];
     }
   }
 
-  printf("Total brightness: %d\n", total_brightness);
+  printf("Total brightness: %d\n", totalBrightness);
 
   return 0;
 }
