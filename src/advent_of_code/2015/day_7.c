@@ -52,90 +52,165 @@
 // In little Bobby's kit's instructions booklet (provided as your puzzle input),
 // what signal is ultimately provided to wire a?
 
+//   --- Part Two ---
+
+// Now, take the signal you got on wire a, override wire b to that signal, and
+// reset the other wires (including wire a). What new signal is ultimately
+// provided to wire a?
+
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define MAX_LINE_LENGTH 50
 #define MAX_WIRES 1000
 #define MAX_INSTRUCTIONS 350
+#define MAX_NAME_LENGTH 5
 
 typedef enum { ASSIGN, AND, OR, LSHIFT, RSHIFT, NOT } Operation;
 
 typedef struct {
-  Operation operation;
-  char *input1;
-  char *input2;
-  char *output;
-  bool isCalculated;
+  Operation op;
+  char input1[MAX_NAME_LENGTH];
+  char input2[MAX_NAME_LENGTH];
+  char output[MAX_NAME_LENGTH];
+  int shiftValue;
 } Instruction;
 
 typedef struct {
-  char *name;
-  uint16_t value;
+  char name[MAX_NAME_LENGTH];
+  int value;
+  bool resolved;
 } Wire;
 
-void parse_instruction(char *line, Instruction *instruction) {
-  char *token;
-  char *operation;
-  char *input1;
-  char *input2;
-  char *output;
+Instruction instructions[MAX_INSTRUCTIONS];
+Wire wires[MAX_WIRES];
+int instructionsCount = 0, wiresCount = 0;
 
-  token = strtok(line, " ");
-  if (strcmp(token, "NOT") == 0) {
-    operation = token;
-    input1 = strtok(NULL, " ");
-    output = strtok(NULL, " ");
-  } else {
-    input1 = token;
-    operation = strtok(NULL, " ");
-    if (strcmp(operation, "->") == 0) {
-      output = strtok(NULL, " ");
-    } else {
-      input2 = strtok(NULL, " ");
-      output = strtok(NULL, " ");
-    }
-  }
+int add_wire(const char *name);
+void parse_instruction(char *line);
+int find_wire(const char *name);
+int get_wire_value(const char *name);
+void resolve_instruction(Instruction *inst);
 
-  instruction->input1 = input1;
-  instruction->input2 = input2;
-  instruction->output = output;
-  instruction->isCalculated = false;
-
-  if (strcmp(operation, "AND") == 0) {
-    instruction->operation = AND;
-  } else if (strcmp(operation, "OR") == 0) {
-    instruction->operation = OR;
-  } else if (strcmp(operation, "LSHIFT") == 0) {
-    instruction->operation = LSHIFT;
-  } else if (strcmp(operation, "RSHIFT") == 0) {
-    instruction->operation = RSHIFT;
-  } else if (strcmp(operation, "NOT") == 0) {
-    instruction->operation = NOT;
-  } else {
-    instruction->operation = ASSIGN;
-  }
-}
-
-uint16_t get_wire_value(char *name, Wire *wires, uint16_t wiresCount) {
-  for (uint16_t i = 0; i < wiresCount; i++) {
+int find_wire(const char *name) {
+  for (int i = 0; i < wiresCount; i++) {
     if (strcmp(wires[i].name, name) == 0) {
-      return wires[i].value;
+      return i;
     }
   }
-  return 0;
+  return -1;
 }
 
-// recursive function to calculate the value of a wire
-void calculate_wire_value(Instruction *instructions, Wire *wires,
-                          uint16_t instructionsCount, uint16_t wiresCount) {}
+int add_wire(const char *name) {
+  if (find_wire(name) == -1) {
+    strcpy(wires[wiresCount].name, name);
+    wires[wiresCount].resolved = false;
+    wires[wiresCount].value = 0;
+    return wiresCount++;
+  }
+  return find_wire(name);
+}
+
+void parse_instruction(char *line) {
+  Instruction instruction;
+
+  if (strstr(line, "AND") != NULL) {
+    instruction.op = AND;
+    sscanf(line, "%s AND %s -> %s", instruction.input1, instruction.input2,
+           instruction.output);
+  } else if (strstr(line, "OR") != NULL) {
+    instruction.op = OR;
+    sscanf(line, "%s OR %s -> %s", instruction.input1, instruction.input2,
+           instruction.output);
+  } else if (strstr(line, "LSHIFT") != NULL) {
+    instruction.op = LSHIFT;
+    sscanf(line, "%s LSHIFT %d -> %s", instruction.input1,
+           &instruction.shiftValue, instruction.output);
+  } else if (strstr(line, "RSHIFT") != NULL) {
+    instruction.op = RSHIFT;
+    sscanf(line, "%s RSHIFT %d -> %s", instruction.input1,
+           &instruction.shiftValue, instruction.output);
+  } else if (strstr(line, "NOT") != NULL) {
+    instruction.op = NOT;
+    sscanf(line, "NOT %s -> %s", instruction.input1, instruction.output);
+  } else {
+    instruction.op = ASSIGN;
+    sscanf(line, "%s -> %s", instruction.input1, instruction.output);
+  }
+
+  add_wire(instruction.output);
+  instructions[instructionsCount++] = instruction;
+}
+
+int get_wire_value(const char *name) {
+  if (isdigit(name[0])) {
+    return (int)atoi(name);
+  }
+  int index = find_wire(name);
+  if (index == -1) {
+    printf("Error: Wire %s not found.\n", name);
+    exit(EXIT_FAILURE);
+  }
+  if (!wires[index].resolved) {
+    for (int i = 0; i < instructionsCount; i++) {
+      if (strcmp(instructions[i].output, name) == 0) {
+        resolve_instruction(&instructions[i]);
+        break;
+      }
+    }
+  }
+  return wires[index].value;
+}
+
+void resolve_instruction(Instruction *inst) {
+  int val1 = 0, val2 = 0;
+  if (inst->op != NOT && inst->op != ASSIGN) {
+    val1 = get_wire_value(inst->input1);
+  }
+  if (inst->op == AND || inst->op == OR) {
+    val2 = get_wire_value(inst->input2);
+  } else if (inst->op == LSHIFT || inst->op == RSHIFT) {
+    val2 = (int)inst->shiftValue;
+  } else if (inst->op == NOT) {
+    val1 = get_wire_value(inst->input1);
+  } else if (inst->op == ASSIGN) {
+    val1 = get_wire_value(inst->input1);
+  }
+
+  int result = 0;
+  switch (inst->op) {
+  case AND:
+    result = val1 & val2;
+    break;
+  case OR:
+    result = val1 | val2;
+    break;
+  case LSHIFT:
+    result = val1 << val2;
+    break;
+  case RSHIFT:
+    result = val1 >> val2;
+    break;
+  case NOT:
+    result = ~val1;
+    break;
+  case ASSIGN:
+    result = val1;
+    break;
+  default:
+    printf("Error: Unknown op.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  int index = find_wire(inst->output);
+  wires[index].value = result;
+  wires[index].resolved = true;
+}
 
 int main(int argc, char *argv[]) {
-  Instruction instructions[MAX_INSTRUCTIONS];
-  Wire wires[MAX_WIRES];
-  uint16_t instructionsCount = 0, wiresCount = 0;
-
   FILE *file;
   char line[MAX_LINE_LENGTH];
 
@@ -151,11 +226,26 @@ int main(int argc, char *argv[]) {
   }
 
   while (fgets(line, MAX_LINE_LENGTH, file) != NULL) {
-    Instruction instruction;
-    parse_instruction(line, &instruction);
-    instructions[instructionsCount++] = instruction;
-  }
+    line[strcspn(line, "\n")] = '\0';
 
+    parse_instruction(line);
+  }
   fclose(file);
+
+  int value = get_wire_value("a");
+  printf("The signal ultimately provided to wire a is %d\n", value);
+
+  int index = find_wire("b");
+  wires[index].value = value;
+
+  // reset all wires except b
+  for (int i = 0; i < wiresCount; i++) {
+    wires[i].resolved = false;
+  }
+  wires[index].resolved = true;
+
+  value = get_wire_value("a");
+  printf("The new signal ultimately provided to wire a is %d\n", value);
+
   return 0;
 }
