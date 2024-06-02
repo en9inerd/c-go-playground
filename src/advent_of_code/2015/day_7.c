@@ -227,7 +227,6 @@ int main(int argc, char *argv[]) {
 
   while (fgets(line, MAX_LINE_LENGTH, file) != NULL) {
     line[strcspn(line, "\n")] = '\0';
-
     parse_instruction(line);
   }
   fclose(file);
