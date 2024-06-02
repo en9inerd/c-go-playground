@@ -83,7 +83,7 @@ int count_memory_chars(const char *str) {
   return count;
 }
 
-int countEncodedChars(const char *str) {
+int count_encoded_chars(const char *str) {
   int count = 2;
   for (int i = 0; str[i] != '\0'; ++i) {
     if (str[i] == '\\' || str[i] == '"') {
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
 
     totalCodeChars += len;
     // totalMemoryChars += count_memory_chars(line);
-    totalEncodedChars += countEncodedChars(line);
+    totalEncodedChars += count_encoded_chars(line);
   }
 
   fclose(file);
