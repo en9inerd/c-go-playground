@@ -23,7 +23,7 @@ build_specific_cfile: $(OUTDIR)/$(FILENAME)
 
 # Rule to run a specific go file
 gorun:
-	@bash run_solution.sh $(firstword $(MAKECMDGOALS)) $(word 2, $(MAKECMDGOALS))
+	cd src/advent-of-code/go && go run $(YEAR)/day$(DAY)/main.go
 
 # Clean rule
 clean:
