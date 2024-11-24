@@ -21,8 +21,12 @@ $(OUTDIR)/%: $(SRCDIR)/%.c
 SOURCE := $(shell find $(SRCDIR) -type f -name '$(FILENAME).c')
 build_specific_cfile: $(OUTDIR)/$(FILENAME)
 
+# Rule to run a specific go file
+gorun:
+	@bash run_solution.sh $(firstword $(MAKECMDGOALS)) $(word 2, $(MAKECMDGOALS))
+
 # Clean rule
 clean:
 	rm -rf $(OUTDIR)
 
-.PHONY: all clean build_specific_cfile
+.PHONY: all clean build_specific_cfile gorun
