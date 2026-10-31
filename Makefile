@@ -25,8 +25,11 @@ build_specific_cfile: $(OUTDIR)/$(FILENAME)
 gorun:
 	cd src/advent-of-code/go && go run $(YEAR)/day$(DAY)/main.go
 
+odinrun:
+	cd src/advent-of-code/odin/$(YEAR)/day$(DAY) && odin run .
+
 # Clean rule
 clean:
 	rm -rf $(OUTDIR)
 
-.PHONY: all clean build_specific_cfile gorun
+.PHONY: all clean build_specific_cfile gorun odinrun
